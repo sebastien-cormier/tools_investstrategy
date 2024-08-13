@@ -38,7 +38,7 @@ jobs:
         host: ns36460.ip-87-98-218.eu
         username: ubuntu
         key: ${{ secrets.KS_PRIVATE_PEM }}
-        source: "is-tools.zip.zip"
+        source: "is-tools.zip"
         target: /home/ubuntu/docker
     - name: Unzip package
       uses: appleboy/ssh-action@v1.0.0
