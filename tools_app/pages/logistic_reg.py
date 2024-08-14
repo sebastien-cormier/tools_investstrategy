@@ -1,6 +1,6 @@
 import streamlit as st
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from include.logistic_regression import *
 from include.app_config import *
@@ -14,16 +14,30 @@ if 'ticker' not in st.session_state:
 if 'ticker_name' not in st.session_state:
     st.session_state['ticker_name'] = 'Apple'
 
-with st.sidebar.form("select_ticker", clear_on_submit=True):
 
+with st.sidebar.form("select_ticker", clear_on_submit=True):
+    tickers_list_ = [(lambda x: x['ticker'])(x) for x in WATCH_LIST]
     name_ = st.selectbox(
-        label="Choix de la Valeur", 
-        options=[(lambda x: x['name'])(x) for x in WATCH_LIST], 
-        key=[(lambda x: x['ticker'])(x) for x in WATCH_LIST])
+        label = "Choix de la Valeur",
+        index = tickers_list_.index(st.session_state['ticker']),
+        options = [(lambda x: x['name'])(x) for x in WATCH_LIST], 
+        key = tickers_list_
+    )
     start_date_ = st.date_input("Date début", st.session_state['start_date'])
     end_date_ = st.date_input("Date fin", st.session_state['end_date'] )
     clicked_ = st.form_submit_button(label="Appliquer")
     if clicked_ :
+        if end_date_ > date.today() :
+            end_date_ = date.today()
+        if start_date_ > (date.today() - timedelta(days=365)):
+            start_date_ = date.today() - timedelta(days=365)
+        if (end_date_ != st.session_state['end_date']) & (end_date_ < (start_date_ + timedelta(days=365))) :
+            # if end date is changed and less than one year with start date, change start date
+            start_date_ = end_date_ - timedelta(days=365)
+        if (start_date_ != st.session_state['start_date']) & (end_date_ < (start_date_ + timedelta(days=365))) :
+            # same with start date
+            end_date_ = start_date_ + timedelta(days=365)
+
         st.session_state['ticker'] = get_ticker_from_name(name_)
         st.session_state['ticker_name'] = name_
         st.session_state['start_date'] = start_date_
@@ -31,7 +45,6 @@ with st.sidebar.form("select_ticker", clear_on_submit=True):
         st.rerun()
 
 st.markdown(f"## {st.session_state['ticker_name']} ({st.session_state['ticker']})")
-
 
 df = load_ticker_history(st.session_state['ticker'])
 
