@@ -2,8 +2,9 @@ import streamlit as st
 
 from datetime import date, datetime, timedelta
 
-from include.logistic_regression import *
+from include.log_regression_func import *
 from include.app_config import *
+from include.tickers_func import *
 
 if 'start_date' not in st.session_state:
     st.session_state['start_date'] = (datetime.today() - timedelta(days=365*5))
@@ -14,14 +15,15 @@ if 'ticker' not in st.session_state:
 if 'ticker_name' not in st.session_state:
     st.session_state['ticker_name'] = 'Apple'
 
+df_tickers = load_tickers()
 
 with st.sidebar.form("select_ticker", clear_on_submit=True):
-    tickers_list_ = [(lambda x: x['ticker'])(x) for x in WATCH_LIST]
+    #tickers_list_ = [(lambda x: x['ticker'])(x) for x in WATCH_LIST]
     name_ = st.selectbox(
         label = "Choix de la Valeur",
-        index = tickers_list_.index(st.session_state['ticker']),
-        options = [(lambda x: x['name'])(x) for x in WATCH_LIST], 
-        key = tickers_list_
+        #index = tickers_list_.index(st.session_state['ticker']),
+        options = df_tickers['shortName'], 
+        key = df_tickers['ticker']
     )
     start_date_ = st.date_input("Date début", st.session_state['start_date'])
     end_date_ = st.date_input("Date fin", st.session_state['end_date'] )
@@ -38,7 +40,7 @@ with st.sidebar.form("select_ticker", clear_on_submit=True):
             # same with start date
             end_date_ = start_date_ + timedelta(days=365)
 
-        st.session_state['ticker'] = get_ticker_from_name(name_)
+        st.session_state['ticker'] = get_ticker_from_name(df_tickers, name_)
         st.session_state['ticker_name'] = name_
         st.session_state['start_date'] = start_date_
         st.session_state['end_date'] = end_date_
@@ -54,6 +56,6 @@ df = df.loc[(df.Date > st.session_state['start_date'].strftime('%Y-%m-%d')) & (d
 min_date = df.Date.min()
 max_date = df.Date.max()
 
-df=Logarithmic_regression(df)
+df = Logarithmic_regression(df)
 
 st.pyplot(plot_chart(df,  st.session_state['ticker'],  st.session_state['ticker_name']), clear_figure=True, use_container_width=True)
